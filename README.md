@@ -18,7 +18,7 @@ Ofrecer una solución simple, accesible y funcional para que cualquier persona p
 
 ##  Demo
 
-👉 [🔗 Ver sitio publicado en Netlify](https://TU-PROYECTO.netlify.app/)  
+👉 [🔗 Ver sitio publicado en Netlify](https://micatalago.netlify.app/)  
 📁 [📂 Carpeta del proyecto en Google Drive](https://drive.google.com/drive/folders/1PLxTyIzJ_Jg0W4ZV8XaeosqINpoxtS1h?usp=drive_link)  
  [🔗 Repositorio en GitHub](https://github.com/FiodorPapor/cata-logo-interactivo)
 
