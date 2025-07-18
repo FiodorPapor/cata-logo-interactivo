@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cargar productos | Catálogo Interactivo</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body class="formulario-body">
+  <main class="formulario-main">
+    <!-- Encabezado -->
+    <header class="formulario-header">
+      <h1 class="formulario-titulo">Cargar productos o servicios</h1>
+      <p class="formulario-subtitulo">Agregá tus productos uno por uno. Podrás editarlos antes de crear tu catálogo.</p>
+    </header>
+
+    <!-- Formulario -->
+    <form class="formulario-producto" autocomplete="off">
+      <div class="form-group">
+        <label for="nombre">Nombre <span class="campo-obligatorio" title="Obligatorio">*</span></label>
+        <input type="text" id="nombre" name="nombre" class="input-text" required maxlength="50" placeholder="Ej: Café americano">
+      </div>
+      <div class="form-group">
+        <label for="precio">Precio <span class="campo-obligatorio" title="Obligatorio">*</span></label>
+        <input type="number" id="precio" name="precio" class="input-number" required min="1" step="0.01" placeholder="Ej: 150">
+      </div>
+      <div class="form-group">
+        <label for="imagen">Imagen (URL o carga)</label>
+        <div class="input-icon-wrapper">
+          <input type="url" id="imagen" name="imagen" class="input-url" placeholder="Pegá el enlace o subí una imagen">
+          <button type="button" class="input-icon-btn" tabindex="-1" aria-label="Adjuntar imagen">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="8.5" stroke="#222" stroke-width="1.5"/><line x1="10" y1="6.5" x2="10" y2="13.5" stroke="#222" stroke-width="1.5" stroke-linecap="round"/><line x1="6.5" y1="10" x2="13.5" y2="10" stroke="#222" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+          <input type="file" accept="image/*" class="input-file-image" style="display:none">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="descripcion">Descripción</label>
+        <textarea id="descripcion" name="descripcion" class="input-textarea" maxlength="200" rows="2" placeholder="Máx. 200 caracteres"></textarea>
+      </div>
+      <button type="submit" class="btn-agregar">Agregar producto</button>
+    </form>
+
+    <!-- Lista de productos agregados -->
+    <section id="productosSection" class="productos-lista-section" style="display:none;">
+      <h2 class="productos-lista-titulo">Productos agregados</h2>
+      <div id="lista-productos" class="productos-lista-contenedor">
+        <!-- Productos renderizados dinámicamente -->
+      </div>
+      <!-- Botón final -->
+      <button id="crearCatalogo" class="btn-crear-catalogo" disabled>Crear catálogo</button>
+    </section>
+
+    <!-- Tooltip de detalles (emergente, oculto por defecto) -->
+    <div class="detalle-tooltip" style="display:none;">
+      <div class="detalle-card">
+        <button class="detalle-cerrar" title="Cerrar">&times;</button>
+        <img src="assets/img/fallback.png" alt="Imagen producto" class="detalle-imagen">
+        <h3 class="detalle-nombre"></h3>
+        <p class="detalle-descripcion"></p>
+        <div class="detalle-precio"></div>
+      </div>
+    </div>
+  </main>
+  <script src="js/formulario.js"></script>
+</body>
+</html> 

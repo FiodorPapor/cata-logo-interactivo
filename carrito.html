@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carrito</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <a href="catalogo.html" class="volver-catalogo">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none"><path d="M15 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Volver al catálogo
+    </a>
+    <h1>Carrito</h1>
+    <p>Revisa tus productos y finaliza tu pedido</p>
+  </header>
+  <main>
+    <div id="carritoLista" class="carrito-lista"></div>
+    <div id="sinCarrito" class="sin-carrito" style="display:none;">Tu carrito está vacío.</div>
+    <div id="carritoTotal" class="carrito-total" style="display:none;">Total: <span>$0.00</span></div>
+    <div id="carritoAcciones" class="carrito-acciones" style="display:none;">
+      <button id="btnVaciar" class="btn-whatsapp btn-vaciar">
+        <svg viewBox="0 0 20 20" fill="none">
+          <path d="M3 6h14" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M8 6V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M15 6v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        Vaciar carrito
+      </button>
+      <a id="btnWhatsapp" class="btn-whatsapp" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.5" stroke="#222" stroke-width="1.1"/><path d="M7.5 8.5C7.5 8.5 8.5 11 12 12.5" stroke="#222" stroke-width="1.1" stroke-linecap="round"/><path d="M10 2C5.58 2 2 5.58 2 10C2 11.85 2.69 13.55 3.85 14.85L2.5 18L6.15 16.15C7.45 17.31 9.15 18 11 18C15.42 18 19 14.42 19 10C19 5.58 15.42 2 11 2Z" stroke="#222" stroke-width="1.1"/></svg>
+        Finalizar pedido por WhatsApp
+      </a>
+         </div>
+   </main>
+   
+   <!-- Modal de confirmación -->
+   <div id="modalBg" class="modal-bg" style="display:none;">
+     <div class="modal">
+       <div class="modal-icon">
+         <svg viewBox="0 0 20 20" fill="none">
+           <path d="M3 6h14" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+           <path d="M8 6V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+           <path d="M15 6v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+         </svg>
+       </div>
+       <div class="modal-title">¿Vaciar carrito?</div>
+       <div class="modal-text">Esta acción eliminará todos los productos del carrito. No se puede deshacer.</div>
+       <div class="modal-buttons">
+         <button id="btnCancelar" class="modal-btn modal-btn-cancel">Cancelar</button>
+         <button id="btnConfirmar" class="modal-btn modal-btn-confirm">Vaciar carrito</button>
+       </div>
+     </div>
+   </div>
+  <script>
+    // --- Utilidades ---
+    const carritoKey = 'carrito';
+    const fallbackImg = 'assets/img/fallback.png';
+    function getImagenValida(url) {
+      if (!url || url.trim() === '') return '';
+      try { 
+        new URL(url); 
+        return url; 
+      } catch { 
+        return ''; 
+      }
+    }
+    // --- Estado ---
+    let carrito = [];
+    // --- Selectores ---
+    const carritoLista = document.getElementById('carritoLista');
+    const sinCarrito = document.getElementById('sinCarrito');
+    const carritoTotal = document.getElementById('carritoTotal');
+    const carritoAcciones = document.getElementById('carritoAcciones');
+    const btnWhatsapp = document.getElementById('btnWhatsapp');
+    const btnVaciar = document.getElementById('btnVaciar');
+    
+    // --- Modal ---
+    const modalBg = document.getElementById('modalBg');
+    const btnCancelar = document.getElementById('btnCancelar');
+    const btnConfirmar = document.getElementById('btnConfirmar');
+    // --- Cargar y renderizar ---
+    function cargarCarrito() {
+      const data = localStorage.getItem(carritoKey);
+      carrito = data ? JSON.parse(data) : [];
+    }
+    function renderizarCarrito() {
+      carritoLista.innerHTML = '';
+      if (!carrito.length) {
+        sinCarrito.style.display = '';
+        carritoTotal.style.display = 'none';
+        carritoAcciones.style.display = 'none';
+        return;
+      }
+      sinCarrito.style.display = 'none';
+      carritoTotal.style.display = '';
+      carritoAcciones.style.display = '';
+      let total = 0;
+      carrito.forEach((prod, idx) => {
+        const item = document.createElement('div');
+        item.className = 'carrito-item';
+        
+        // Verificar si el producto tiene imagen válida
+        const imagenValida = getImagenValida(prod.imagen);
+        const tieneImagen = imagenValida !== '';
+        
+        if (tieneImagen) {
+          // Imagen
+          const img = document.createElement('img');
+          img.className = 'carrito-img';
+          img.src = imagenValida;
+          img.alt = prod.nombre;
+          item.appendChild(img);
+        } else {
+          // Sin imagen - agregar placeholder invisible para mantener alineación
+          const placeholder = document.createElement('div');
+          placeholder.className = 'carrito-img-placeholder';
+          item.appendChild(placeholder);
+        }
+        // Info
+        const info = document.createElement('div');
+        info.className = 'carrito-info';
+        const nombre = document.createElement('div');
+        nombre.className = 'carrito-nombre';
+        nombre.textContent = prod.nombre;
+        info.appendChild(nombre);
+        const precio = document.createElement('div');
+        precio.className = 'carrito-precio';
+        precio.textContent = `$${Number(prod.precio).toFixed(2)}`;
+        info.appendChild(precio);
+        
+        // Controles de cantidad
+        const cantidadControls = document.createElement('div');
+        cantidadControls.className = 'carrito-cantidad-controls';
+        
+        const btnMenos = document.createElement('button');
+        btnMenos.className = 'cantidad-btn';
+        btnMenos.textContent = '−';
+        btnMenos.onclick = () => cambiarCantidad(idx, -1);
+        if ((prod.cantidad || 1) <= 1) {
+          btnMenos.disabled = true;
+        }
+        
+        const cantidadDisplay = document.createElement('div');
+        cantidadDisplay.className = 'cantidad-display';
+        cantidadDisplay.textContent = prod.cantidad || 1;
+        
+        const btnMas = document.createElement('button');
+        btnMas.className = 'cantidad-btn';
+        btnMas.textContent = '+';
+        btnMas.onclick = () => cambiarCantidad(idx, 1);
+        
+        cantidadControls.appendChild(btnMenos);
+        cantidadControls.appendChild(cantidadDisplay);
+        cantidadControls.appendChild(btnMas);
+        info.appendChild(cantidadControls);
+        item.appendChild(info);
+        // Eliminar
+        const btnEliminar = document.createElement('button');
+        btnEliminar.className = 'carrito-eliminar';
+        btnEliminar.innerHTML = `<svg viewBox="0 0 20 20" fill="none"><line x1="5.5" y1="5.5" x2="14.5" y2="14.5" stroke="#222" stroke-width="1.1" stroke-linecap="round"/><line x1="14.5" y1="5.5" x2="5.5" y2="14.5" stroke="#222" stroke-width="1.1" stroke-linecap="round"/></svg>`;
+        btnEliminar.onclick = () => eliminarProducto(idx);
+        item.appendChild(btnEliminar);
+        carritoLista.appendChild(item);
+        total += (Number(prod.precio) * (prod.cantidad || 1));
+      });
+      carritoTotal.querySelector('span').textContent = `$${total.toFixed(2)}`;
+      btnWhatsapp.href = generarLinkWhatsapp();
+    }
+    // --- Eliminar producto ---
+    function eliminarProducto(idx) {
+      const prod = carrito[idx];
+      carrito.splice(idx, 1);
+      localStorage.setItem(carritoKey, JSON.stringify(carrito));
+      renderizarCarrito();
+      mostrarFeedback(`Eliminado: ${prod.nombre}`);
+    }
+    
+    // --- Modal de confirmación ---
+    function mostrarModalVaciar() {
+      modalBg.style.display = 'flex';
+      setTimeout(() => { btnCancelar.focus(); }, 100);
+    }
+    
+    function cerrarModal() {
+      modalBg.style.display = 'none';
+    }
+    
+    function vaciarCarrito() {
+      localStorage.removeItem(carritoKey);
+      carrito = [];
+      renderizarCarrito();
+      cerrarModal();
+      mostrarFeedback('Carrito vaciado');
+    }
+    
+    // --- Cambiar cantidad ---
+    function cambiarCantidad(idx, delta) {
+      const prod = carrito[idx];
+      const nuevaCantidad = (prod.cantidad || 1) + delta;
+      
+      if (nuevaCantidad <= 0) {
+        // Si la cantidad llega a 0, eliminar el producto
+        eliminarProducto(idx);
+        return;
+      }
+      
+      // Limitar a máximo 99 productos
+      if (nuevaCantidad > 99) {
+        mostrarFeedback('Máximo 99 unidades por producto');
+        return;
+      }
+      
+      prod.cantidad = nuevaCantidad;
+      localStorage.setItem(carritoKey, JSON.stringify(carrito));
+      renderizarCarrito();
+      
+      const mensaje = delta > 0 ? `+1 ${prod.nombre}` : `-1 ${prod.nombre}`;
+      mostrarFeedback(mensaje);
+    }
+    // --- WhatsApp link ---
+    function generarLinkWhatsapp() {
+      if (!carrito.length) return '#';
+      let mensaje = '¡Hola! Quiero pedir lo siguiente:%0A';
+      let total = 0;
+      carrito.forEach(prod => {
+        mensaje += `• ${prod.nombre} x${prod.cantidad || 1} - $${Number(prod.precio).toFixed(2)}%0A`;
+        total += (Number(prod.precio) * (prod.cantidad || 1));
+      });
+      mensaje += `%0ATotal: $${total.toFixed(2)}`;
+      return `https://wa.me/?text=${mensaje}`;
+    }
+    // --- Feedback visual ---
+    function mostrarFeedback(msg) {
+      const toast = document.createElement('div');
+      toast.textContent = msg;
+      toast.style.position = 'fixed';
+      toast.style.bottom = '32px';
+      toast.style.left = '50%';
+      toast.style.transform = 'translateX(-50%)';
+      toast.style.background = '#fff';
+      toast.style.color = '#181818';
+      toast.style.fontFamily = 'Inter, system-ui, sans-serif';
+      toast.style.fontWeight = '200';
+      toast.style.fontSize = '1.05rem';
+      toast.style.padding = '10px 22px';
+      toast.style.borderRadius = '999px';
+      toast.style.boxShadow = '0 2px 16px 0 rgba(30,32,37,0.10)';
+      toast.style.zIndex = '2000';
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity .22s cubic-bezier(.4,0,.2,1)';
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity = '1'; }, 10);
+      setTimeout(() => { toast.style.opacity = '0'; }, 1700);
+      setTimeout(() => { toast.remove(); }, 2000);
+    }
+    // --- Event listeners ---
+    btnVaciar.onclick = mostrarModalVaciar;
+    btnCancelar.onclick = cerrarModal;
+    btnConfirmar.onclick = vaciarCarrito;
+
+    // --- Finalizar compra: limpieza y redirección después de WhatsApp ---
+    btnWhatsapp.addEventListener('click', function(e) {
+      // Permitir abrir WhatsApp (por enlace)
+      setTimeout(() => {
+        localStorage.removeItem(carritoKey);
+        mostrarFeedback('¡Gracias por tu compra!');
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 1200);
+      }, 500); // Da tiempo a WhatsApp abrirse
+    });
+    
+    // Cerrar modal con Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modalBg.style.display === 'flex') {
+        cerrarModal();
+      }
+    });
+    
+    // Cerrar modal al hacer clic fuera
+    modalBg.onclick = (e) => {
+      if (e.target === modalBg) {
+        cerrarModal();
+      }
+    };
+    
+    // --- Inicialización ---
+    cargarCarrito();
+    renderizarCarrito();
+  </script>
+</body>
+</html> 

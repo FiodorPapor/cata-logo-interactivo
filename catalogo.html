@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="toolbar" class="toolbar">
+    <nav class="icon-bar">
+      <button class="icon-btn" id="buscarBtn" title="Buscar" tabindex="0" aria-label="Buscar">
+        <img src="assets/img/lupa.png" alt="Buscar" class="toolbar-img" />
+      </button>
+      <button class="icon-btn" id="ayudaBtn" title="Ayuda" tabindex="0" aria-label="Ayuda">
+        <img src="assets/img/pregunta.png" alt="Ayuda" class="toolbar-img" />
+      </button>
+      <div id="carritoIcon" class="icon-btn carrito-icon" tabindex="0" aria-label="Ver carrito">
+        <img src="assets/img/cesta.png" alt="Carrito" class="toolbar-img" />
+        <span id="carritoContador" class="carrito-contador" style="display:none;">0</span>
+      </div>
+    </nav>
+    <!-- Campo de búsqueda -->
+    <div id="searchContainer" class="search-container" style="display:none;">
+      <input type="text" id="searchInput" class="search-input" placeholder="Buscar productos..." autocomplete="off">
+      <button id="closeSearch" class="close-search" aria-label="Cerrar búsqueda">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><line x1="5.5" y1="5.5" x2="14.5" y2="14.5" stroke="#222" stroke-width="1.1" stroke-linecap="round"/><line x1="14.5" y1="5.5" x2="5.5" y2="14.5" stroke="#222" stroke-width="1.1" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+  <header>
+    <h1>Catálogo</h1>
+    <p>Explora los productos y agrégalos a tu carrito</p>
+  </header>
+  <section id="productos-api" class="catalogo-productos"></section>
+  <main>
+    <div id="sinProductos" class="sin-productos" style="display:none;">No hay productos cargados.</div>
+  </main>
+  <!-- Modal -->
+  <div id="modalBg" class="modal-bg" style="display:none;">
+    <div class="modal" tabindex="-1">
+      <button class="modal-cerrar" id="cerrarModal" aria-label="Cerrar">
+        <svg viewBox="0 0 20 20" fill="none"><line x1="5.5" y1="5.5" x2="14.5" y2="14.5" stroke="#222" stroke-width="1.1" stroke-linecap="round"/><line x1="14.5" y1="5.5" x2="5.5" y2="14.5" stroke="#222" stroke-width="1.1" stroke-linecap="round"/></svg>
+      </button>
+      <img class="modal-img" id="modalImg" src="" alt="Imagen producto"/>
+      <div class="modal-nombre" id="modalNombre"></div>
+      <div class="modal-precio" id="modalPrecio"></div>
+      <div class="modal-descripcion" id="modalDescripcion"></div>
+      <button class="btn-agregar" id="modalAgregar">
+        <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.5" stroke="#222" stroke-width="1.1"/><path d="M10 7V13" stroke="#222" stroke-width="1.1" stroke-linecap="round"/><path d="M7 10H13" stroke="#222" stroke-width="1.1" stroke-linecap="round"/></svg>
+        Agregar al carrito
+      </button>
+    </div>
+  </div>
+  <script src="js/catalogo.js"></script>
+  <script>
+    // --- Utilidades ---
+    const productosKey = 'productos';
+    const fallbackImg = 'assets/img/fallback.png';
+    function getImagenValida(url) {
+      if (!url || url.trim() === '') return '';
+      try { 
+        new URL(url); 
+        return url; 
+      } catch { 
+        return ''; 
+      }
+    }
+    // --- Renderizado ---
+    const catalogo = document.getElementById('catalogo');
+    const sinProductos = document.getElementById('sinProductos');
+    let productos = [];
+    let carrito = JSON.parse(localStorage.getItem('carrito') || '[]');
+    function cargarProductos() {
+      const data = localStorage.getItem(productosKey);
+      productos = data ? JSON.parse(data) : [];
+    }
+    function renderizarCatalogo() {
+      catalogo.innerHTML = '';
+      if (!productos.length) {
+        sinProductos.style.display = '';
+        catalogo.style.display = 'none';
+        return;
+      }
+      sinProductos.style.display = 'none';
+      catalogo.style.display = '';
+      productos.forEach((prod, idx) => {
+        const card = document.createElement('div');
+        card.className = 'producto-card';
+        
+        // Verificar si el producto tiene imagen válida
+        const imagenValida = getImagenValida(prod.imagen);
+        const tieneImagen = imagenValida !== '';
+        
+        if (tieneImagen) {
+          // Imagen
+          const img = document.createElement('img');
+          img.className = 'producto-img';
+          img.src = imagenValida;
+          img.alt = prod.nombre;
+          card.appendChild(img);
+        } else {
+          // Sin imagen - aplicar clase especial
+          card.classList.add('sin-imagen');
+        }
+        // Info (nombre + precio)
+        const info = document.createElement('div');
+        info.className = 'producto-info';
+        const nombre = document.createElement('div');
+        nombre.className = 'producto-nombre';
+        nombre.textContent = prod.nombre;
+        info.appendChild(nombre);
+        const precio = document.createElement('div');
+        precio.className = 'producto-precio';
+        precio.textContent = `$${Number(prod.precio).toFixed(2)}`;
+        info.appendChild(precio);
+        card.appendChild(info);
+        // Botones
+        const btns = document.createElement('div');
+        btns.className = 'producto-btns';
+        // Botón agregar
+        const btnAgregar = document.createElement('button');
+        btnAgregar.className = 'btn-agregar';
+        btnAgregar.innerHTML = `<svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.5" stroke="#222" stroke-width="1.1"/><path d="M10 7V13" stroke="#222" stroke-width="1.1" stroke-linecap="round"/><path d="M7 10H13" stroke="#222" stroke-width="1.1" stroke-linecap="round"/></svg>Agregar al carrito`;
+        btnAgregar.onclick = e => { e.stopPropagation(); agregarAlCarrito(prod); };
+        btns.appendChild(btnAgregar);
+        card.appendChild(btns);
+        // Abrir modal al hacer clic en la tarjeta (excepto en el botón)
+        card.onclick = e => {
+          if (!btns.contains(e.target)) abrirModal(prod);
+        };
+        catalogo.appendChild(card);
+      });
+    }
+    // --- Carrito ---
+    function agregarAlCarrito(prod) {
+      const existingProduct = carrito.find(p => p.id === prod.id);
+      
+      if (!existingProduct) {
+        // Si el producto no existe, agregarlo con cantidad 1
+        const newProduct = { ...prod, cantidad: 1 };
+        carrito.push(newProduct);
+        localStorage.setItem('carrito', JSON.stringify(carrito));
+        mostrarFeedback('Producto agregado al carrito', 'ok');
+        actualizarContadorCarrito(true);
+      } else {
+        // Si ya existe, aumentar la cantidad
+        existingProduct.cantidad = (existingProduct.cantidad || 1) + 1;
+        localStorage.setItem('carrito', JSON.stringify(carrito));
+        mostrarFeedback(`+1 ${prod.nombre}`, 'ok');
+        actualizarContadorCarrito(true);
+      }
+    }
+    // --- Modal ---
+    const modalBg = document.getElementById('modalBg');
+    const modalImg = document.getElementById('modalImg');
+    const modalNombre = document.getElementById('modalNombre');
+    const modalPrecio = document.getElementById('modalPrecio');
+    const modalDescripcion = document.getElementById('modalDescripcion');
+    const modalAgregar = document.getElementById('modalAgregar');
+    const cerrarModal = document.getElementById('cerrarModal');
+    let modalProd = null;
+    function abrirModal(prod) {
+      modalProd = prod;
+      const modal = document.querySelector('.modal');
+      const imagenValida = getImagenValida(prod.imagen);
+      
+      if (imagenValida !== '') {
+        modalImg.src = imagenValida;
+        modalImg.style.display = 'block';
+        modal.classList.remove('sin-imagen');
+      } else {
+        modalImg.style.display = 'none';
+        modal.classList.add('sin-imagen');
+      }
+      
+      modalNombre.textContent = prod.nombre;
+      modalPrecio.textContent = `$${Number(prod.precio).toFixed(2)}`;
+      modalDescripcion.textContent = prod.descripcion || '';
+      modalBg.style.display = 'flex';
+      setTimeout(() => { modal.focus(); }, 80);
+    }
+    function cerrarModalFn() {
+      modalBg.style.display = 'none';
+      modalProd = null;
+    }
+    cerrarModal.onclick = cerrarModalFn;
+    modalBg.onclick = e => { if (e.target === modalBg) cerrarModalFn(); };
+    document.addEventListener('keydown', e => {
+      if (modalBg.style.display === 'flex' && (e.key === 'Escape' || e.key === 'Esc')) cerrarModalFn();
+    });
+    modalAgregar.onclick = () => { if (modalProd) agregarAlCarrito(modalProd); };
+    // --- Feedback visual ---
+    function mostrarFeedback(msg, tipo = 'ok') {
+      const toast = document.createElement('div');
+      toast.textContent = msg;
+      toast.style.position = 'fixed';
+      toast.style.bottom = '32px';
+      toast.style.left = '50%';
+      toast.style.transform = 'translateX(-50%)';
+      toast.style.background = '#fff';
+      toast.style.color = '#181818';
+      toast.style.fontFamily = 'Inter, system-ui, sans-serif';
+      toast.style.fontWeight = '200';
+      toast.style.fontSize = '1.05rem';
+      toast.style.padding = '10px 22px';
+      toast.style.borderRadius = '999px';
+      toast.style.boxShadow = '0 2px 16px 0 rgba(30,32,37,0.10)';
+      toast.style.zIndex = '2000';
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity .22s cubic-bezier(.4,0,.2,1)';
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.opacity = '1'; }, 10);
+      setTimeout(() => { toast.style.opacity = '0'; }, 1700);
+      setTimeout(() => { toast.remove(); }, 2000);
+    }
+    // --- Carrito Icon ---
+    const carritoIcon = document.getElementById('carritoIcon');
+    const carritoContador = document.getElementById('carritoContador');
+    function getCarritoCount() {
+      try {
+        const arr = JSON.parse(localStorage.getItem('carrito') || '[]');
+        return arr.reduce((total, prod) => total + (prod.cantidad || 1), 0);
+      } catch { return 0; }
+    }
+    function actualizarContadorCarrito(animar = false) {
+      const count = getCarritoCount();
+      if (count > 0) {
+        carritoContador.textContent = count;
+        carritoContador.style.display = '';
+        if (animar) {
+          carritoContador.style.transform = 'scale(1.2)';
+          setTimeout(() => { carritoContador.style.transform = 'scale(1)'; }, 220);
+        }
+      } else {
+        carritoContador.style.display = 'none';
+      }
+    }
+    carritoIcon.onclick = () => {
+      window.location.href = 'carrito.html';
+    };
+    carritoIcon.onkeydown = (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        window.location.href = 'carrito.html';
+      }
+    };
+    // Inicializar contador al cargar
+    actualizarContadorCarrito();
+    // --- Búsqueda ---
+    const searchContainer = document.getElementById('searchContainer');
+    const searchInput = document.getElementById('searchInput');
+    const closeSearch = document.getElementById('closeSearch');
+    const buscarBtn = document.getElementById('buscarBtn');
+    
+    function mostrarBusqueda() {
+      searchContainer.style.display = 'flex';
+      setTimeout(() => { searchInput.focus(); }, 100);
+    }
+    
+    function ocultarBusqueda() {
+      searchContainer.style.display = 'none';
+      searchInput.value = '';
+      renderizarCatalogo(); // Mostrar todos los productos
+    }
+    
+    buscarBtn.onclick = mostrarBusqueda;
+    closeSearch.onclick = ocultarBusqueda;
+    
+    // Funcionalidad de ayuda
+    const ayudaBtn = document.getElementById('ayudaBtn');
+    ayudaBtn.onclick = () => {
+      mostrarFeedback('Haz clic en las tarjetas para ver detalles o usa el botón "Agregar al carrito"', 'info');
+    };
+    
+    // Cerrar con Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && searchContainer.style.display === 'flex') {
+        ocultarBusqueda();
+      }
+    });
+    
+    // Cerrar al hacer clic fuera
+    document.addEventListener('click', (e) => {
+      if (searchContainer.style.display === 'flex' && 
+          !searchContainer.contains(e.target) && 
+          !buscarBtn.contains(e.target)) {
+        ocultarBusqueda();
+      }
+    });
+    
+    // Búsqueda en tiempo real
+    searchInput.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase().trim();
+      if (query === '') {
+        renderizarCatalogo();
+      } else {
+        const productosFiltrados = productos.filter(prod => 
+          prod.nombre.toLowerCase().includes(query)
+        );
+        renderizarProductosFiltrados(productosFiltrados);
+      }
+    });
+    
+    function renderizarProductosFiltrados(productosFiltrados) {
+      catalogo.innerHTML = '';
+      if (!productosFiltrados.length) {
+        sinProductos.style.display = '';
+        sinProductos.textContent = 'No se encontraron productos.';
+        catalogo.style.display = 'none';
+        return;
+      }
+      sinProductos.style.display = 'none';
+      catalogo.style.display = '';
+      productosFiltrados.forEach((prod, idx) => {
+        const card = document.createElement('div');
+        card.className = 'producto-card';
+        
+        // Verificar si el producto tiene imagen válida
+        const imagenValida = getImagenValida(prod.imagen);
+        const tieneImagen = imagenValida !== '';
+        
+        if (tieneImagen) {
+          // Imagen
+          const img = document.createElement('img');
+          img.className = 'producto-img';
+          img.src = imagenValida;
+          img.alt = prod.nombre;
+          card.appendChild(img);
+        } else {
+          // Sin imagen - aplicar clase especial
+          card.classList.add('sin-imagen');
+        }
+        // Info (nombre + precio)
+        const info = document.createElement('div');
+        info.className = 'producto-info';
+        const nombre = document.createElement('div');
+        nombre.className = 'producto-nombre';
+        nombre.textContent = prod.nombre;
+        info.appendChild(nombre);
+        const precio = document.createElement('div');
+        precio.className = 'producto-precio';
+        precio.textContent = `$${Number(prod.precio).toFixed(2)}`;
+        info.appendChild(precio);
+        card.appendChild(info);
+        // Botones
+        const btns = document.createElement('div');
+        btns.className = 'producto-btns';
+        // Botón agregar
+        const btnAgregar = document.createElement('button');
+        btnAgregar.className = 'btn-agregar';
+        btnAgregar.innerHTML = `<svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.5" stroke="#222" stroke-width="1.1"/><path d="M10 7V13" stroke="#222" stroke-width="1.1" stroke-linecap="round"/><path d="M7 10H13" stroke="#222" stroke-width="1.1" stroke-linecap="round"/></svg>Agregar al carrito`;
+        btnAgregar.onclick = e => { e.stopPropagation(); agregarAlCarrito(prod); };
+        btns.appendChild(btnAgregar);
+        card.appendChild(btns);
+        // Abrir modal al hacer clic en la tarjeta (excepto en el botón)
+        card.onclick = e => {
+          if (!btns.contains(e.target)) abrirModal(prod);
+        };
+        catalogo.appendChild(card);
+      });
+    }
+    // --- Inicialización ---
+    cargarProductos();
+    renderizarCatalogo();
+    // --- Toolbar fixed/shadow ---
+    const toolbar = document.getElementById('toolbar');
+    function updateToolbarShadow() {
+      if (window.scrollY > 8) {
+        toolbar.classList.add('toolbar-visible');
+      } else {
+        toolbar.classList.remove('toolbar-visible');
+      }
+    }
+    window.addEventListener('scroll', updateToolbarShadow);
+    document.addEventListener('DOMContentLoaded', updateToolbarShadow);
+  </script>
+</body>
+</html> 
